@@ -1,0 +1,60 @@
+name: Matrix Build with Artifacts
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [14.x, 16.x, 18.x]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: matrix-42df3f9
+        run: echo "Building for Node.js ${{ matrix.node-version }}"
+      
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+      
+      - name: Generate build artifact
+        run: |
+          cat > build-output.txt << EOF
+          Build Information
+          =================
+          Node.js Version: ${{ matrix.node-version }}
+          Build Date: $(date)
+          Build Status: SUCCESS
+          Build ID: ${{ github.run_id }}
+          Commit: ${{ github.sha }}
+          EOF
+      
+      - name: Create JSON artifact
+        run: |
+          cat > build-info.json << EOF
+          {
+            "node_version": "${{ matrix.node-version }}",
+            "build_timestamp": "$(date)",
+            "build_id": "${{ github.run_id }}",
+            "commit_sha": "${{ github.sha }}",
+            "status": "success"
+          }
+          EOF
+      
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-42df3f9-node${{ matrix.node-version }}
+          path: |
+            build-output.txt
+            build-info.json
+          retention-days: 30
